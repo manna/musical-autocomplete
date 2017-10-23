@@ -7,7 +7,7 @@ class MusicEvents {
   constructor(midiInput) {
     const self = this;
     this.STEP = 25; // in ms
-    this.NOTE = 'NOTE'; // magic numbers
+    this.NOTES = 'NOTES'; // magic numbers
     this.CHORD = 'CHORD';
     this.EMPTY = 'EMPTY';
 
@@ -65,8 +65,8 @@ class MusicEvents {
 
   // assumes notes is sorted and notes.length > 0
   classify(notes) {
-    if (notes.length == 1) {
-      return {type: this.NOTE, notes};
+    if (notes.length <= 2) {
+      return {type: this.NOTES, notes};
     } else {
       for (let i = 0; i < notes.length; i++) {
         const currNotes = notes
@@ -83,12 +83,8 @@ class MusicEvents {
         const chordType = this.chordDict[intervals.join(' ')];
         if (chordType) {
           const chord = rootName + chordType;
-          return {
-            type: this.CHORD,
-            notes,
-            chord,
-            inversions: notes.length - i
-          };
+          const inversions = (notes.length - i) % notes.length;
+          return {type: this.CHORD, notes, chord, inversions};
         }
       }
       return {type: this.CHORD, notes, chord: 'unknown'};

@@ -14,8 +14,12 @@ const MidiDebug = (function() {
         console.log('WebMidi enabled!');
         const input = WebMidi.getInputByName(INPUT_NAME);
         const musicEvents = new MusicEvents(input);
-        musicEvents.addEventListener('group', notes => {
-          console.log(notes);
+        musicEvents.addEventListener('group', data => {
+          if (data.type === musicEvents.NOTES) {
+            console.log(data.notes.join(','));
+          } else {
+            console.log(data.chord + ':' + data.inversions);
+          }
         });
       }
     });
