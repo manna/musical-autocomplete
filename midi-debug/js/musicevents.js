@@ -5,12 +5,19 @@
 
 class MusicEvents {
   constructor(midiInput) {
+    const self = this;
     this.STEP = 25; // in ms
-    this.EMPTY = 'EMPTY'; // magic number
+    this.NOTE = 'NOTE'; // magic numbers
+    this.CHORD = 'CHORD';
+    this.EMPTY = 'EMPTY';
 
     this.input = midiInput;
     this.queue = [];
     this.listeners = {};
+    this.chordDict = {};
+    Tonal.Dictionary.chord.names().forEach(name => {
+      self.chordDict[Tonal.Dictionary.chord(name).join(' ')] = name;
+    });
     this.init();
   }
 
@@ -47,11 +54,44 @@ class MusicEvents {
 
     if (i !== this.queue.length) {
       // output all of the notes before the first double break as a group
-      const notes = this.queue.slice(0, i).filter(a => a !== this.EMPTY);
-      if (notes.length !== 0) this.notify('group', notes);
+      const notes = Tonal.Array
+        .sort(this.queue.slice(0, i).filter(a => a !== this.EMPTY));
+      if (notes.length !== 0) this.notify('group', this.classify(notes));
 
       // clear everything up to and including the double break from the queue
       this.queue = this.queue.slice(i);
+    }
+  }
+
+  // assumes notes is sorted and notes.length > 0
+  classify(notes) {
+    if (notes.length == 1) {
+      return {type: this.NOTE, notes};
+    } else {
+      for (let i = 0; i < notes.length; i++) {
+        const currNotes = notes
+          .slice(i, notes.length)
+          .concat(notes.slice(0, i).map(note => {
+            return Tonal.Distance.transpose(note, '8P');
+          }));
+        const rootName = Tonal.Note.pc(currNotes[0]);
+        const intervals = currNotes.map(note => {
+          return Tonal.Interval.fromSemitones(
+            Tonal.Distance.semitones(currNotes[0], note)
+          );
+        });
+        const chordType = this.chordDict[intervals.join(' ')];
+        if (chordType) {
+          const chord = rootName + chordType;
+          return {
+            type: this.CHORD,
+            notes,
+            chord,
+            inversions: notes.length - i
+          };
+        }
+      }
+      return {type: this.CHORD, notes, chord: 'unknown'};
     }
   }
 

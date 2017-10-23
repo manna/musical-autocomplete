@@ -15,7 +15,7 @@ const MidiDebug = (function() {
         const input = WebMidi.getInputByName(INPUT_NAME);
         const musicEvents = new MusicEvents(input);
         musicEvents.addEventListener('group', notes => {
-          console.log(notes.join(''));
+          console.log(notes);
         });
       }
     });
