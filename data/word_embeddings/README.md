@@ -1,0 +1,1 @@
+- vectors_pruned.200.txt.gz : These are not great embeddings, but they'll do for now.
