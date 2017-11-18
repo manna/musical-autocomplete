@@ -55,7 +55,10 @@ class MusicEvents {
     if (i !== this.queue.length) {
       // output all of the notes before the first double break as a group
       const notes = Tonal.Array
-        .sort(this.queue.slice(0, i).filter(a => a !== this.EMPTY));
+        .sort(this.queue.slice(0, i).filter(a => a !== this.EMPTY))
+        .filter(note => {
+          return Tonal.Note.midi(note) > 48;
+        });
       if (notes.length !== 0) this.notify('group', this.classify(notes));
 
       // clear everything up to and including the double break from the queue
