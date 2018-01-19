@@ -29,76 +29,8 @@ from magenta.protobuf import generator_pb2
 from magenta.protobuf import music_pb2
 from magenta.music.melodies_lib import extract_melodies, midi_file_to_melody
 
-FLAGS = tf.app.flags.FLAGS
-tf.app.flags.DEFINE_string(
-    'run_dir', None,
-    'Path to the directory where the latest checkpoint will be loaded from.')
-tf.app.flags.DEFINE_string(
-    'checkpoint_file', None,
-    'Path to the checkpoint file. run_dir will take priority over this flag.')
-tf.app.flags.DEFINE_string(
-    'bundle_file', None,
-    'Path to the bundle file. If specified, this will take priority over '
-    'run_dir and checkpoint_file, unless save_generator_bundle is True, in '
-    'which case both this flag and either run_dir or checkpoint_file are '
-    'required')
-tf.app.flags.DEFINE_boolean(
-    'save_generator_bundle', False,
-    'If true, instead of generating a sequence, will save this generator as a '
-    'bundle file in the location specified by the bundle_file flag')
-tf.app.flags.DEFINE_string(
-    'bundle_description', None,
-    'A short, human-readable text description of the bundle (e.g., training '
-    'data, hyper parameters, etc.).')
-tf.app.flags.DEFINE_string(
-    'output_dir', '/tmp/melody_rnn/generated',
-    'The directory where MIDI files will be saved to.')
-tf.app.flags.DEFINE_integer(
-    'num_outputs', 10,
-    'The number of melodies to generate. One MIDI file will be created for '
-    'each.')
-tf.app.flags.DEFINE_integer(
-    'num_steps', 128,
-    'The total number of steps the generated melodies should be, priming '
-    'melody length + generated steps. Each step is a 16th of a bar.')
-tf.app.flags.DEFINE_string(
-    'primer_melody', '',
-    'A string representation of a Python list of '
-    'magenta.music.Melody event values. For example: '
-    '"[60, -2, 60, -2, 67, -2, 67, -2]". If specified, this melody will be '
-    'used as the priming melody. If a priming melody is not specified, '
-    'melodies will be generated from scratch.')
-tf.app.flags.DEFINE_string(
-    'primer_midi', '',
-    'The path to a MIDI file containing a melody that will be used as a '
-    'priming melody. If a primer melody is not specified, melodies will be '
-    'generated from scratch.')
-tf.app.flags.DEFINE_float(
-    'qpm', None,
-    'The quarters per minute to play generated output at. If a primer MIDI is '
-    'given, the qpm from that will override this flag. If qpm is None, qpm '
-    'will default to 120.')
-tf.app.flags.DEFINE_float(
-    'temperature', 1.0,
-    'The randomness of the generated melodies. 1.0 uses the unaltered softmax '
-    'probabilities, greater than 1.0 makes melodies more random, less than 1.0 '
-    'makes melodies less random.')
-tf.app.flags.DEFINE_integer(
-    'beam_size', 1,
-    'The beam size to use for beam search when generating melodies.')
-tf.app.flags.DEFINE_integer(
-    'branch_factor', 1,
-    'The branch factor to use for beam search when generating melodies.')
-tf.app.flags.DEFINE_integer(
-    'steps_per_iteration', 1,
-    'The number of melody steps to take per beam search iteration.')
-tf.app.flags.DEFINE_string(
-    'log', 'INFO',
-    'The threshold for what messages will be logged DEBUG, INFO, WARN, ERROR, '
-    'or FATAL.')
 
-
-def get_checkpoint():
+def get_checkpoint(FLAGS):
   """Get the training dir or checkpoint path to be used by the model."""
   if ((FLAGS.run_dir or FLAGS.checkpoint_file) and
       FLAGS.bundle_file and not FLAGS.save_generator_bundle):
@@ -113,7 +45,7 @@ def get_checkpoint():
     return None
 
 
-def get_bundle():
+def get_bundle(FLAGS):
   """Returns a generator_pb2.GeneratorBundle object based read from bundle_file.
 
   Returns:
@@ -128,7 +60,7 @@ def get_bundle():
   return magenta.music.read_bundle_file(bundle_file)
 
 
-def run_with_flags(generator, sentence=['happy', 'birthday']):
+def run_with_flags(FLAGS, generator, sentence=['happy', 'birthday']):
   """Generates melodies and saves them as MIDI files.
 
   Uses the options specified by the flags defined in this module.
@@ -243,11 +175,11 @@ def run_with_flags(generator, sentence=['happy', 'birthday']):
                   FLAGS.num_outputs, FLAGS.output_dir)
 
 
-def main(unused_argv):
+def get_generator(FLAGS):
   """Saves bundle or runs generator based on flags."""
   tf.logging.set_verbosity(FLAGS.log)
 
-  bundle = get_bundle()
+  bundle = get_bundle(FLAGS)
 
   if bundle:
     config_id = bundle.generator_details.id
@@ -260,22 +192,86 @@ def main(unused_argv):
       model=melody_rnn_model.MelodyRnnModel(config),
       details=config.details,
       steps_per_quarter=config.steps_per_quarter,
-      checkpoint=get_checkpoint(),
+      checkpoint=get_checkpoint(FLAGS),
       bundle=bundle)
+  return generator
 
-  # if FLAGS.save_generator_bundle:
-  #   bundle_filename = os.path.expanduser(FLAGS.bundle_file)
-  #   if FLAGS.bundle_description is None:
-  #     tf.logging.warning('No bundle description provided.')
-  #   tf.logging.info('Saving generator bundle to %s', bundle_filename)
-  #   generator.create_bundle_file(bundle_filename, FLAGS.bundle_description)
-  # else:  
-  run_with_flags(generator)
+def main(unused_argv):
+  global generator
+  generator = get_generator(FLAGS)
+
+  run_with_flags(FLAGS, generator)
 
 
 def console_entry_point():
   tf.app.run(main)
 
-
 if __name__ == '__main__':
+  FLAGS = tf.app.flags.FLAGS
+  tf.app.flags.DEFINE_string(
+      'run_dir', None,
+      'Path to the directory where the latest checkpoint will be loaded from.')
+  tf.app.flags.DEFINE_string(
+      'checkpoint_file', None,
+      'Path to the checkpoint file. run_dir will take priority over this flag.')
+  tf.app.flags.DEFINE_string(
+      'bundle_file', None,
+      'Path to the bundle file. If specified, this will take priority over '
+      'run_dir and checkpoint_file, unless save_generator_bundle is True, in '
+      'which case both this flag and either run_dir or checkpoint_file are '
+      'required')
+  tf.app.flags.DEFINE_boolean(
+      'save_generator_bundle', False,
+      'If true, instead of generating a sequence, will save this generator as a '
+      'bundle file in the location specified by the bundle_file flag')
+  tf.app.flags.DEFINE_string(
+      'bundle_description', None,
+      'A short, human-readable text description of the bundle (e.g., training '
+      'data, hyper parameters, etc.).')
+  tf.app.flags.DEFINE_string(
+      'output_dir', '/tmp/melody_rnn/generated',
+      'The directory where MIDI files will be saved to.')
+  tf.app.flags.DEFINE_integer(
+      'num_outputs', 10,
+      'The number of melodies to generate. One MIDI file will be created for '
+      'each.')
+  tf.app.flags.DEFINE_integer(
+      'num_steps', 128,
+      'The total number of steps the generated melodies should be, priming '
+      'melody length + generated steps. Each step is a 16th of a bar.')
+  tf.app.flags.DEFINE_string(
+      'primer_melody', '',
+      'A string representation of a Python list of '
+      'magenta.music.Melody event values. For example: '
+      '"[60, -2, 60, -2, 67, -2, 67, -2]". If specified, this melody will be '
+      'used as the priming melody. If a priming melody is not specified, '
+      'melodies will be generated from scratch.')
+  tf.app.flags.DEFINE_string(
+      'primer_midi', '',
+      'The path to a MIDI file containing a melody that will be used as a '
+      'priming melody. If a primer melody is not specified, melodies will be '
+      'generated from scratch.')
+  tf.app.flags.DEFINE_float(
+      'qpm', None,
+      'The quarters per minute to play generated output at. If a primer MIDI is '
+      'given, the qpm from that will override this flag. If qpm is None, qpm '
+      'will default to 120.')
+  tf.app.flags.DEFINE_float(
+      'temperature', 1.0,
+      'The randomness of the generated melodies. 1.0 uses the unaltered softmax '
+      'probabilities, greater than 1.0 makes melodies more random, less than 1.0 '
+      'makes melodies less random.')
+  tf.app.flags.DEFINE_integer(
+      'beam_size', 1,
+      'The beam size to use for beam search when generating melodies.')
+  tf.app.flags.DEFINE_integer(
+      'branch_factor', 1,
+      'The branch factor to use for beam search when generating melodies.')
+  tf.app.flags.DEFINE_integer(
+      'steps_per_iteration', 1,
+      'The number of melody steps to take per beam search iteration.')
+  tf.app.flags.DEFINE_string(
+      'log', 'INFO',
+      'The threshold for what messages will be logged DEBUG, INFO, WARN, ERROR, '
+      'or FATAL.')
   console_entry_point()
