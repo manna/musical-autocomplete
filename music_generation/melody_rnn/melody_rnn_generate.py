@@ -157,20 +157,21 @@ def run_with_flags(FLAGS, generator, sentence=['happy', 'birthday']):
 
     notes = list(generated_sequence.notes)
     notes = map(lambda note:{
-      'pitch': note.pitch,
-      'velocity': note.velocity,
-      'start_time': note.start_time,
-      'end_time': note.end_time}, notes)
+      'pitch': int(note.pitch),
+      'velocity': int(note.velocity),
+      'start_time': float(note.start_time),
+      'end_time': float(note.end_time)}, notes)
 
-    notes_filename = '%s_%s.notes' % (date_and_time, str(i + 1).zfill(digits))
+    yield notes, float(loglik), midi_path
+    # notes_filename = '%s_%s.notes' % (date_and_time, str(i + 1).zfill(digits))
     
-    notes_and_loglik = {
-      'log-likelihood' : loglik,
-      'notes' : notes
-    }
-    with open(os.path.join(FLAGS.output_dir, notes_filename), 'w') as f:
-      f.write(str(notes_and_loglik))
-      
+    # notes_and_loglik = {
+    #   'log-likelihood' : loglik,
+    #   'notes' : notes
+    # }
+    # with open(os.path.join(FLAGS.output_dir, notes_filename), 'w') as f:
+    #   f.write(str(notes_and_loglik))
+
   tf.logging.info('Wrote %d MIDI files to %s',
                   FLAGS.num_outputs, FLAGS.output_dir)
 

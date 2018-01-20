@@ -2,6 +2,8 @@ from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 import SocketServer
 import tensorflow as tf
 from melody_rnn_generate import get_generator, run_with_flags
+import json
+import urlparse
 
 class S(BaseHTTPRequestHandler):
     def _set_headers(self):
@@ -10,10 +12,19 @@ class S(BaseHTTPRequestHandler):
         self.end_headers()
 
     def do_GET(self):
-        global generator
+        """
+        @param num_outputs (int). For example, ?num_outputs=10
+        @return generated_melodies: [ [notes, loglik, midi_path], ... ]
+        such that len(generated_melodies) = num_outputs
+        """
         self._set_headers()
-        run_with_flags(FLAGS, generator)
-        self.wfile.write("<html><body><h1>hi!</h1></body></html>")
+
+        num_outputs = int(urlparse.parse_qs(urlparse.urlparse(self.path).query).get('num_outputs', ['10'])[0])
+        FLAGS.num_outputs = num_outputs
+
+        generated_melodies = list(run_with_flags(FLAGS, generator))        
+
+        self.wfile.write(json.dumps(generated_melodies))
 
     def do_HEAD(self):
         self._set_headers()
