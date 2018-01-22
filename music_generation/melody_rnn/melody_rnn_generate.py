@@ -60,15 +60,13 @@ def get_bundle(FLAGS):
   return magenta.music.read_bundle_file(bundle_file)
 
 
-def run_with_flags(FLAGS, generator, sentence=['happy', 'birthday']):
+def run_with_flags(FLAGS, generator):
   """Generates melodies and saves them as MIDI files.
 
   Uses the options specified by the flags defined in this module.
 
   Args:
     generator: The MelodyRnnSequenceGenerator to use for generation.
-    sentence: A list of strings to guide generation. Affecting mood,
-    intensity...etc
   """
   if not FLAGS.output_dir:
     tf.logging.fatal('--output_dir required')
