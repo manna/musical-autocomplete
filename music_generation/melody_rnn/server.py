@@ -81,7 +81,7 @@ def generate_melody(generator):
     FLAGS.num_outputs = 1
     return list(run_with_flags(FLAGS, generator))[0]
 
-pool = Pool(4)
+pool = Pool(2)
 
 class S(BaseHTTPRequestHandler):
     def _set_headers(self):
