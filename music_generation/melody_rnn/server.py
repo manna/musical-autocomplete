@@ -4,36 +4,8 @@ import tensorflow as tf
 from melody_rnn_generate import get_generator, run_with_flags
 import json
 import urlparse
+from multiprocessing import Pool
 
-class S(BaseHTTPRequestHandler):
-    def _set_headers(self):
-        self.send_response(200)
-        self.send_header('Content-type', 'text/html')
-        self.end_headers()
-
-    def do_GET(self):
-        """
-        @param num_outputs (int). For example, ?num_outputs=10
-        @return generated_melodies: [ [notes, loglik, midi_path], ... ]
-        such that len(generated_melodies) = num_outputs
-        """
-        self._set_headers()
-
-        num_outputs = int(urlparse.parse_qs(urlparse.urlparse(self.path).query).get('num_outputs', ['10'])[0])
-        FLAGS.num_outputs = num_outputs
-
-        generated_melodies = list(run_with_flags(FLAGS, generator))        
-
-        self.wfile.write(json.dumps(generated_melodies))
-
-    def do_HEAD(self):
-        self._set_headers()
-        
-    def do_POST(self):
-        # Doesn't do anything with posted data
-        self._set_headers()
-        self.wfile.write("<html><body><h1>POST!</h1></body></html>")
-        
 FLAGS = tf.app.flags.FLAGS
 tf.app.flags.DEFINE_string(
     'run_dir', None,
@@ -59,7 +31,7 @@ tf.app.flags.DEFINE_string(
     'output_dir', '/tmp/melody_rnn/generated',
     'The directory where MIDI files will be saved to.')
 tf.app.flags.DEFINE_integer(
-    'num_outputs', 10,
+    'num_outputs', 1,
     'The number of melodies to generate. One MIDI file will be created for '
     'each.')
 tf.app.flags.DEFINE_integer(
@@ -101,18 +73,58 @@ tf.app.flags.DEFINE_string(
     'log', 'INFO',
     'The threshold for what messages will be logged DEBUG, INFO, WARN, ERROR, '
     'or FATAL.')
+tf.app.flags.DEFINE_integer(
+    'port', 5000,
+    'Server port')
 
-def run(unused_argv, server_class=HTTPServer, handler_class=S, port=5000):
-    server_address = ('', port)
+def generate_melody(generator):
+    FLAGS.num_outputs = 1
+    return list(run_with_flags(FLAGS, generator))[0]
+
+pool = Pool(4)
+
+class S(BaseHTTPRequestHandler):
+    def _set_headers(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'text/html')
+        self.end_headers()
+
+    def do_GET(self):
+        """
+        @param num_outputs (int). For example, ?num_outputs=10
+        @return generated_melodies: [ [notes, loglik, midi_path], ... ]
+        such that len(generated_melodies) = num_outputs
+        """
+        self._set_headers()
+
+        num_outputs = int(urlparse.parse_qs(urlparse.urlparse(self.path).query).get('num_outputs', ['10'])[0])
+
+        generated_melodies = list(
+            pool.map(generate_melody, [generator]*num_outputs)
+            )
+
+        # Single process:
+        # generated_melodies = list(run_with_flags(FLAGS, generator))        
+
+        self.wfile.write(json.dumps(generated_melodies))
+
+    def do_HEAD(self):
+        self._set_headers()
+        
+    def do_POST(self):
+        # Doesn't do anything with posted data
+        self._set_headers()
+        self.wfile.write("<html><body><h1>POST!</h1></body></html>")
+        
+def run(unused_argv, server_class=HTTPServer, handler_class=S):
+    server_address = ('', FLAGS.port)
     httpd = server_class(server_address, handler_class)
     
     global generator
     generator = get_generator(FLAGS)
 
-    print 'Starting httpd...', FLAGS
+    print 'Starting melody server on port', FLAGS.port 
     httpd.serve_forever()
-
-
 
 if __name__ == "__main__":
   tf.app.run(run)
