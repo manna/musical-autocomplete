@@ -2,27 +2,17 @@ const MidiDebug = (function() {
   // constants
   const INPUT_NAME = 'Keystation 88 MIDI 1';
   const WORDS = [
-    "the",
-    "a",
-    "destroy",
-    "create",
-    "i",
-    "arman",
-    "dinosaur",
-    "ears",
-    "listen",
-    "music",
-    "water",
+    "the", "a", "destroy", "create", "i", "arman", "dinosaur", "ears", "listen", "music", "water",
 
-    "energetic",
-    "harmonious",
+    "energetic", "harmonious",
 
-    "program",
-    "study",
-    "eat",
-    "sleep",
-    "play"
+    "program", "study", "eat", "sleep", "play"
   ];
+  const GOOD_WORDS = [
+    "time", "person", "year", "way", "day", "thing", "man", "world", "life", "hand", "part", "child", "eye", "woman", "place", "work", "week", "case", "point", "government", "company", "number", "group", "problem", "fact", "be", "have", "do", "say", "get", "make", "go", "know", "take", "see", "come", "think", "look", "want", "give", "use", "find", "tell", "ask", "work", "seem", "feel", "try", "leave", "call", "good", "new", "first", "last", "long", "great", "little", "own", "other", "old", "right", "big", "high", "different", "small", "large", "next", "early", "young", "important", "few", "public", "bad", "same", "able", "to", "of", "in", "for", "on", "with", "at", "by", "from", "up", "about", "into", "over", "after", "the", "and", "a", "that", "I", "it", "not", "he", "as", "you", "this", "but", "his", "they", "her", "she", "or", "an", "will", "my", "one", "all", "would", "there", "their"
+  ];
+  GOOD_WORDS.map(word => console.log(wordVecs[word]));
+  const WORD_VECS = {};
   const LOW_CHORD = 'D#Maj7';
   const HIGH_CHORD = 'G#Maj7';
   const CLEAR_CHORD = 'Gm7';
@@ -47,13 +37,21 @@ const MidiDebug = (function() {
           if (data.type === musicEvents.NOTES) {
             console.log(data.notes.join(','));
           } else {
-            console.log(data.chord + ':' + data.inversions);
+            const chordVec = getChordVec(data.notes);
+            console.log(
+              data.chord + ':' + data.inversions + JSON.stringify()
+            );
             handleChord(data);
             render();
           }
         });
       }
     });
+  }
+
+  function getChordVec(notes) {
+    // vec 
+    return notes;
   }
 
   function handleChord(data) {
