@@ -11,8 +11,6 @@ const MidiDebug = (function() {
   const GOOD_WORDS = [
     "time", "person", "year", "way", "day", "thing", "man", "world", "life", "hand", "part", "child", "eye", "woman", "place", "work", "week", "case", "point", "government", "company", "number", "group", "problem", "fact", "be", "have", "do", "say", "get", "make", "go", "know", "take", "see", "come", "think", "look", "want", "give", "use", "find", "tell", "ask", "work", "seem", "feel", "try", "leave", "call", "good", "new", "first", "last", "long", "great", "little", "own", "other", "old", "right", "big", "high", "different", "small", "large", "next", "early", "young", "important", "few", "public", "bad", "same", "able", "to", "of", "in", "for", "on", "with", "at", "by", "from", "up", "about", "into", "over", "after", "the", "and", "a", "that", "I", "it", "not", "he", "as", "you", "this", "but", "his", "they", "her", "she", "or", "an", "will", "my", "one", "all", "would", "there", "their"
   ];
-  GOOD_WORDS.map(word => console.log(wordVecs[word]));
-  const WORD_VECS = {};
   const LOW_CHORD = 'D#Maj7';
   const HIGH_CHORD = 'G#Maj7';
   const CLEAR_CHORD = 'Gm7';
@@ -22,8 +20,11 @@ const MidiDebug = (function() {
 
   // work functions
   function initMidiDebug() {
-    render();
+    $.post('/state', function success(data) {
+      render(data);
+    });
 
+    /*
     WebMidi.enable(err => {
       if (err) {
         console.log('WebMidi could not be enabled.', err);
@@ -47,6 +48,7 @@ const MidiDebug = (function() {
         });
       }
     });
+    */
   }
 
   function getChordVec(notes) {
@@ -72,13 +74,14 @@ const MidiDebug = (function() {
     }
   }
 
-  function render() {
-    const mid = Math.floor((low + high) / 2);
-    const lowWords = WORDS.slice(low, mid);
-    const highWords = WORDS.slice(mid, high);
-    document.getElementById('low').innerHTML = lowWords.join(', ');
-    document.getElementById('high').innerHTML = highWords.join(', ');
-    document.getElementById('content').innerHTML = message.join(' ');
+  function render(data) {
+    const word_list = document.getElementById('word-list');
+    word_list.innerHTML = '';
+    data['next_words'].forEach(next_word => {
+      const word_element = document.createElement('div');
+      word_element.innerHTML = next_word;
+      word_list.appendChild(word_element);
+    });
   }
 
   return {
