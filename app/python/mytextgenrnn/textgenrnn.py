@@ -45,6 +45,19 @@ class textgenrnn:
         if return_as_list:
             return gen_texts
 
+    def generate_word(self, n=1, return_as_list=False, **kwargs):
+        gen_texts = []
+        for _ in range(n):
+            gen_text = textgenrnn_generate_word(self.model,
+                                                self.vocab,
+                                                self.indices_char,
+                                                **kwargs)
+            if not return_as_list:
+                print("{}\n".format(gen_text))
+            gen_texts.append(gen_text)
+        if return_as_list:
+            return gen_texts
+
     def train_on_texts(self, texts, batch_size=128, num_epochs=50, verbose=1):
 
         # Encode chars as X and y.
@@ -163,6 +176,33 @@ def textgenrnn_generate(model, vocab,
             temperature)
         next_char = indices_char[next_index]
         text += [next_char]
+    return ''.join(text[1:-1])
+
+# assumes prefix ends in a non-space
+def textgenrnn_generate_word(model, vocab,
+                             indices_char, prefix=None, temperature=0.2,
+                             maxlen=40, meta_token='<s>',
+                             max_gen_length=200):
+    '''
+    Generates and returns a single text.
+    '''
+
+    text = [meta_token] + list(prefix) if prefix else [meta_token]
+    next_char = ''
+    space_count = 0
+
+    while next_char != meta_token and len(text) < max_gen_length:
+        encoded_text = textgenrnn_encode_sequence(text[-maxlen:],
+                                                  vocab, maxlen)
+        next_index = textgenrnn_sample(
+            model.predict(encoded_text, batch_size=1)[0],
+            temperature)
+        next_char = indices_char[next_index]
+        text += [next_char]
+        if len(text) >= len(list(prefix)) and next_char == ' ':
+            space_count += 1
+        if space_count > 1:
+            break
     return ''.join(text[1:-1])
 
 
