@@ -72,3 +72,10 @@ def consume_word():
     state['prefix'] += chosen_word + ' '
     update_next_words()
     return jsonify(state)
+
+
+# roll the dice again to get new top 10 next word predictions
+@app.route('/refresh', methods=['POST'])
+def refresh_next_words():
+    update_next_words()
+    return jsonify(state)

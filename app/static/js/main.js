@@ -9,6 +9,12 @@ const MidiDebug = (function() {
       render(data);
     });
 
+    document.getElementById('refresh').addEventListener('click', () => {
+      $.post('/refresh', function success(data) {
+        render(data);
+      });
+    });
+
     /*
     WebMidi.enable(err => {
       if (err) {
