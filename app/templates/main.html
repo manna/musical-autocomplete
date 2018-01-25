@@ -13,15 +13,45 @@
 
   body {
     padding: 2rem;
+    color: #202020;
   }
 
-  h2 {
-    margin-bottom: 1rem;
+  #text, #text span {
+    font-family: monospace;
+    font-size: 1.4rem;
+    margin-top: 1rem;
   }
 
-  #refresh, #word-list div {
+  #refresh, .word-element {
+    border: 1px solid #efefef;
+    border-bottom: none;
+    padding: 0.7rem 1rem;
     cursor: pointer;
+    font-size: 1.5rem;
   }
+
+  #refresh:hover, .word-element:hover {
+    border: 1px solid #efefef;
+    border-bottom: none;
+    padding: 0.7rem 1rem;
+    cursor: pointer;
+    font-size: 1.5rem;
+    background: #efefef;
+  }
+
+  #refresh {
+    border-bottom: 1px solid #efefef;
+  }
+
+  .left {
+    float: left;
+  }
+  .right {
+    float: right;
+    padding-left: 1rem;
+  }
+  .text-column { width: 29%; }
+  .word-column { width: 69%; }
   </style>
 
   <!-- TODO: add back in the note detection functionality -->
@@ -32,15 +62,12 @@
   <script src="static/js/main.js"></script>
 </head>
 <body>
-  <h2> Piano Language</h2>
+  <div class="column left text-column">
+    <h1> Piano Language</h1>
 
-  <div>
-    <h4>Text</h4>
     <div id="text"></div>
-
-    <br>
-
-    <h4>Next words</h4>
+  </div>
+  <div class="column right word-column">
     <div id="word-list"></div>
     <div id="refresh">== Refresh word list ==</div>
   </div>

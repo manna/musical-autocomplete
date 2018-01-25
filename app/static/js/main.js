@@ -57,9 +57,17 @@ const MidiDebug = (function() {
     // add events to all of the next word options
     data['next_words'].forEach(next_word => {
       const word_element = document.createElement('div');
+      word_element.className = 'word-element';
       word_element.innerHTML = next_word;
       word_element.addEventListener('click', (next_word_closure => {
-        return () => {
+        return (e) => {
+          // update the selected element's color
+          e.target.style.color = '#FAB02F';
+          e.target.style.background = '#FAB02F';
+
+          // optimistic update
+          document.getElementById('text').innerHTML += ' ' + next_word_closure;
+          
           return choose_word(next_word_closure);
         }
       })(next_word));
