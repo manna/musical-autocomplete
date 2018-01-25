@@ -3,6 +3,7 @@ import SocketServer
 import tensorflow as tf
 from melody_rnn_generate import get_generator, run_with_flags
 import json
+import simplejson
 import urlparse
 from multiprocessing import Pool
 
@@ -35,7 +36,7 @@ tf.app.flags.DEFINE_integer(
     'The number of melodies to generate. One MIDI file will be created for '
     'each.')
 tf.app.flags.DEFINE_integer(
-    'num_steps', 128,
+    'num_steps', 48,
     'The total number of steps the generated melodies should be, priming '
     'melody length + generated steps. Each step is a 16th of a bar.')
 tf.app.flags.DEFINE_string(
@@ -77,8 +78,9 @@ tf.app.flags.DEFINE_integer(
     'port', 5000,
     'Server port')
 
-def generate_melody(generator):
+def generate_melody((generator, primer_melody)):
     FLAGS.num_outputs = 1
+    FLAGS.primer_melody = str(primer_melody)
     return list(run_with_flags(FLAGS, generator))[0]
 
 pool = Pool(2)
@@ -89,18 +91,29 @@ class S(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/html')
         self.end_headers()
 
-    def do_GET(self):
+    def do_POST(self):
         """
-        @param num_outputs (int). For example, ?num_outputs=10
+        Example usage:
+
+        curl -d "{\"num_outputs\":10,\"primer_melody\":[60]}" -H "Content-Type: application/json" -X POST http://localhost:5000/data
+        
         @return generated_melodies: [ [notes, loglik, midi_path], ... ]
-        such that len(generated_melodies) = num_outputs
+        such that len(generated_melodies) = data["num_outputs"]
         """
+        
         self._set_headers()
+        print "in post method"
+        self.data_string = self.rfile.read(int(self.headers['Content-Length']))
 
-        num_outputs = int(urlparse.parse_qs(urlparse.urlparse(self.path).query).get('num_outputs', ['10'])[0])
+        self.send_response(200)
+        self.end_headers()
 
+        data = simplejson.loads(self.data_string)
+        
+        num_outputs = data['num_outputs'];
+        primer_melody = data['primer_melody'];
         generated_melodies = list(
-            pool.map(generate_melody, [generator]*num_outputs)
+            pool.map(generate_melody, [(generator,primer_melody)]*num_outputs)
             )
 
         # Single process:
@@ -108,14 +121,6 @@ class S(BaseHTTPRequestHandler):
 
         self.wfile.write(json.dumps(generated_melodies))
 
-    def do_HEAD(self):
-        self._set_headers()
-        
-    def do_POST(self):
-        # Doesn't do anything with posted data
-        self._set_headers()
-        self.wfile.write("<html><body><h1>POST!</h1></body></html>")
-        
 def run(unused_argv, server_class=HTTPServer, handler_class=S):
     server_address = ('', FLAGS.port)
     httpd = server_class(server_address, handler_class)
