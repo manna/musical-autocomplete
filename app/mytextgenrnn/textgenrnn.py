@@ -201,7 +201,7 @@ def textgenrnn_generate_word(model, vocab,
         text += [next_char]
         if len(text) >= len(list(prefix)) and next_char == ' ':
             space_count += 1
-        if space_count > 1:
+        if space_count > 0:
             break
     return ''.join(text[1:-1])
 

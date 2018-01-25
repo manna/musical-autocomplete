@@ -1,21 +1,6 @@
 const MidiDebug = (function() {
   // constants
   const INPUT_NAME = 'Keystation 88 MIDI 1';
-  const WORDS = [
-    "the", "a", "destroy", "create", "i", "arman", "dinosaur", "ears", "listen", "music", "water",
-
-    "energetic", "harmonious",
-
-    "program", "study", "eat", "sleep", "play"
-  ];
-  const GOOD_WORDS = [
-    "time", "person", "year", "way", "day", "thing", "man", "world", "life", "hand", "part", "child", "eye", "woman", "place", "work", "week", "case", "point", "government", "company", "number", "group", "problem", "fact", "be", "have", "do", "say", "get", "make", "go", "know", "take", "see", "come", "think", "look", "want", "give", "use", "find", "tell", "ask", "work", "seem", "feel", "try", "leave", "call", "good", "new", "first", "last", "long", "great", "little", "own", "other", "old", "right", "big", "high", "different", "small", "large", "next", "early", "young", "important", "few", "public", "bad", "same", "able", "to", "of", "in", "for", "on", "with", "at", "by", "from", "up", "about", "into", "over", "after", "the", "and", "a", "that", "I", "it", "not", "he", "as", "you", "this", "but", "his", "they", "her", "she", "or", "an", "will", "my", "one", "all", "would", "there", "their"
-  ];
-  const LOW_CHORD = 'D#Maj7';
-  const HIGH_CHORD = 'G#Maj7';
-  const CLEAR_CHORD = 'Gm7';
-  let low = 0;
-  let high = WORDS.length;
   const message = [];
 
   // work functions
@@ -56,31 +41,29 @@ const MidiDebug = (function() {
     return notes;
   }
 
-  function handleChord(data) {
-    const mid = Math.floor((low + high) / 2);
-    if (data.chord === LOW_CHORD) {
-      high = mid;
-    } else if (data.chord === HIGH_CHORD) {
-      low = mid;
-    } else if (data.chord === CLEAR_CHORD) {
-      low = 0;
-      high = WORDS.length;
-    }
-
-    if (low === high - 1) {
-      message.push(WORDS[low]);
-      low = 0;
-      high = WORDS.length;
-    }
-  }
-
   function render(data) {
+    // update the UI
+    const text = document.getElementById('text');
     const word_list = document.getElementById('word-list');
+    text.innerHTML = data['prefix'];
     word_list.innerHTML = '';
+
+    // add events to all of the next word options
     data['next_words'].forEach(next_word => {
       const word_element = document.createElement('div');
       word_element.innerHTML = next_word;
+      word_element.addEventListener('click', (next_word_closure => {
+        return () => {
+          return choose_word(next_word_closure);
+        }
+      })(next_word));
       word_list.appendChild(word_element);
+    });
+  }
+
+  function choose_word(word) {
+    $.post('/consume', {chosen_word: word}, function success(data) {
+      render(data);
     });
   }
 
