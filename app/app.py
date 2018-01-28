@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 from mytextgenrnn import textgenrnn
 import random
+import json
 app = Flask(__name__)
 textgen = textgenrnn()
 
@@ -16,7 +17,7 @@ textgen = textgenrnn()
 # - this server is run locally, so there will only ever be 1 server & 1 client
 # - the data is not sensitve, so persistence isn't necessary
 initial_prefix = ''
-state = { 'prefix': initial_prefix }
+state = { 'prefix': initial_prefix, 'note_history': [] }
 
 # helpers
 # ==
@@ -31,7 +32,6 @@ def get_next_words(prefix, n=5, max_attempts=100):
             n=1, prefix=prefix, temperature=temp, return_as_list=True,
             max_gen_length=1000
         )[0]
-        print raw_word
         word = raw_word[len(prefix):]
         if word not in words:
             words.append(word)
@@ -51,7 +51,7 @@ def get_random_melody(k):
     return [random.choice(['C','D','E','F','G','A','B']) for _ in range(k)]
 
 
-def get_melodies(n, k):
+def get_melodies(note_history, n, k):
     melodies = []
     while len(melodies) < n:
         random_melody = get_random_melody(k)
@@ -66,7 +66,11 @@ def update_next_words():
     sample_count = 10
     melody_size = 3
     state['next_words'] = get_next_words(state['prefix'], n=sample_count)
-    state['melodies'] = get_melodies(sample_count, melody_size)
+    state['melodies'] = get_melodies(
+        state['note_history'],
+        sample_count,
+        melody_size
+    )
     state['version'] = hash(state['prefix'])
 
 # init state
@@ -94,6 +98,8 @@ def retrieve_state():
 @app.route('/consume', methods=['POST'])
 def consume_word():
     chosen_word = request.form['chosen_word']
+    note_history = request.form['note_history']
+    state['note_history'] = json.loads(note_history)
     state['prefix'] += chosen_word + ' '
     update_next_words()
     return jsonify(state)

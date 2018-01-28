@@ -2,7 +2,6 @@ const MidiDebug = (function() {
   // constants
   const INPUT_NAME = 'Keystation 88 MIDI 1';
   const message = [];
-  const note_history = [];
   let previous_state = {};
   let AJAX_LOCK = false;
 
@@ -20,17 +19,19 @@ const MidiDebug = (function() {
     const musicEvents = new MusicEvents();
     musicEvents.addEventListener('group', data => {
       // add the notes to the history
-      Array.prototype.push.apply(note_history, data.notes);
+      Array.prototype.push.apply(previous_state.note_history, data.notes);
 
       // check suffix against melodies
       // TODO: this function is fat af abstract #dat #shit
       for (let i = 0; i < previous_state['melodies'].length; i++) {
         const melody = previous_state['melodies'][i];
         let different = false;
-        if (melody.length > note_history.length) continue;
+        if (melody.length > previous_state.note_history.length) continue;
 
         for (let j = 1; j <= melody.length; j++) {
-          const note = note_history[note_history.length - j].charAt(0);
+          const note = previous_state.note_history[
+            previous_state.note_history.length - j
+          ].charAt(0);
           if (note !== melody[melody.length - j]) {
             different = true;
           }
@@ -110,7 +111,11 @@ const MidiDebug = (function() {
   }
 
   function choose_word(word, next) {
-    $.post('/consume', {chosen_word: word}, function success(data) {
+    console.log(previous_state.note_history);
+    $.post('/consume', {
+      chosen_word: word,
+      note_history: JSON.stringify(previous_state.note_history)
+    }, function success(data) {
       render(data);
       next();
     });
