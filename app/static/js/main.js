@@ -2,6 +2,8 @@ const MidiDebug = (function() {
   // constants
   const INPUT_NAME = 'Keystation 88 MIDI 1';
   const message = [];
+  const note_history = [];
+  let previous_state = {};
   let AJAX_LOCK = false;
 
   // work functions
@@ -17,6 +19,38 @@ const MidiDebug = (function() {
     // misc event listeners
     const musicEvents = new MusicEvents();
     musicEvents.addEventListener('group', data => {
+      // add the notes to the history
+      Array.prototype.push.apply(note_history, data.notes);
+
+      // check suffix against melodies
+      // TODO: this function is fat af abstract #dat #shit
+      for (let i = 0; i < previous_state['melodies'].length; i++) {
+        const melody = previous_state['melodies'][i];
+        let different = false;
+        if (melody.length > note_history.length) continue;
+
+        for (let j = 1; j <= melody.length; j++) {
+          const note = note_history[note_history.length - j].charAt(0);
+          if (note !== melody[melody.length - j]) {
+            different = true;
+          }
+        }
+        if (!different) {
+          // select word i
+          const selected_word = previous_state['next_words'][i]
+          AJAX_LOCK = true;
+
+          // optimistic update
+          document.getElementById('text').innerHTML += ' ' + selected_word;
+
+          choose_word(selected_word, () => {
+            AJAX_LOCK = false;
+          });
+          break;
+        }
+      }
+
+      // logging stuff
       if (data.type === musicEvents.NOTES) {
         console.log(data.notes.join(','));
       } else {
@@ -36,6 +70,9 @@ const MidiDebug = (function() {
   }
 
   function render(data) {
+    // update the state
+    previous_state = data;
+
     // update the UI
     const text = document.getElementById('text');
     const word_list = document.getElementById('word-list');
