@@ -24,15 +24,10 @@ const Drivers = (() => {
 
   // precondition: there is a keyboard that can dispatch events
   function initKeyboardDriver() {
-    const notes = ['C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3', 'C4', 'D4', 'E4'];
-    const order = {
-      65: 0, 83: 1, 68: 2, 70: 3,
-      71: 4, 72: 5, 74: 6, 75: 7,
-      76: 8, 186: 9
-    };
+    const notes = ['A2', 'B2', 'C3', 'D3', 'E3', 'F3', 'G3'];
     window.addEventListener('keydown', e => {
-      if (order[e.keyCode] || order[e.keyCode] === 0) {
-        const value = notes[order[e.keyCode]];
+      if (e.keyCode >= 65 && e.keyCode <= 71) {
+        const value = notes[e.keyCode - 65];
         window.dispatchEvent(new CustomEvent('emulatednoteon', {
           detail: {
             note: {

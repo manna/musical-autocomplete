@@ -1,5 +1,6 @@
 from flask import Flask, render_template, jsonify, request
 from mytextgenrnn import textgenrnn
+import random
 app = Flask(__name__)
 textgen = textgenrnn()
 
@@ -39,9 +40,33 @@ def get_next_words(prefix, n=5, max_attempts=100):
     return words
 
 
+def melodies_are_same(a, b):
+    if len(a) != len(b): return False
+    for pair in zip(a, b):
+        if pair[0] != pair[1]: return False
+    return True
+
+
+def get_random_melody(k):
+    return [random.choice(['C','D','E','F','G','A','B']) for _ in range(k)]
+
+
+def get_melodies(n, k):
+    melodies = []
+    while len(melodies) < n:
+        random_melody = get_random_melody(k)
+        for melody in melodies:
+            if melodies_are_same(melody, random_melody): continue
+        melodies.append(random_melody)
+    return melodies
+
+
 # convenience method to update next words and the version
 def update_next_words():
-    state['next_words'] = get_next_words(state['prefix'], n=10)
+    sample_count = 10
+    melody_size = 3
+    state['next_words'] = get_next_words(state['prefix'], n=sample_count)
+    state['melodies'] = get_melodies(sample_count, melody_size)
     state['version'] = hash(state['prefix'])
 
 # init state

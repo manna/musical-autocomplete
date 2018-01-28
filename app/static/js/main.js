@@ -43,10 +43,13 @@ const MidiDebug = (function() {
     word_list.innerHTML = '';
 
     // add events to all of the next word options
-    data['next_words'].forEach(next_word => {
+    data['next_words'].forEach((next_word, i) => {
+      const next_melody = data['melodies'][i];
       const word_element = document.createElement('div');
       word_element.className = 'word-element';
-      word_element.innerHTML = next_word;
+      word_element.innerHTML = next_word +
+        '<span style="color: #cdcdcd"> --- </span>' +
+        '<code>' + next_melody.join(',') + '</code>';
       word_element.addEventListener('click', (next_word_closure => {
         return (e) => {
           if (!AJAX_LOCK) {

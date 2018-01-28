@@ -6,7 +6,7 @@
 class MusicEvents {
   constructor() {
     const self = this;
-    this.STEP = 100; // in ms
+    this.STEP = 15; // in ms
     this.NOTES = 'NOTES'; // magic numbers
     this.CHORD = 'CHORD';
     this.EMPTY = 'EMPTY';
