@@ -2,6 +2,7 @@ const MidiDebug = (function() {
   // constants
   const INPUT_NAME = 'Keystation 88 MIDI 1';
   const message = [];
+  let AJAX_LOCK = false;
 
   // work functions
   function initMidiDebug() {
@@ -61,23 +62,30 @@ const MidiDebug = (function() {
       word_element.innerHTML = next_word;
       word_element.addEventListener('click', (next_word_closure => {
         return (e) => {
-          // update the selected element's color
-          e.target.style.color = '#FAB02F';
-          e.target.style.background = '#FAB02F';
+          if (!AJAX_LOCK) {
+            AJAX_LOCK = true;
 
-          // optimistic update
-          document.getElementById('text').innerHTML += ' ' + next_word_closure;
-          
-          return choose_word(next_word_closure);
+            // update the selected element's color
+            e.target.style.color = '#FAB02F';
+            e.target.style.background = '#FAB02F';
+
+            // optimistic update
+            document.getElementById('text').innerHTML += ' ' + next_word_closure;
+            
+            return choose_word(next_word_closure, () => {
+              AJAX_LOCK = false;
+            });
+          }
         }
       })(next_word));
       word_list.appendChild(word_element);
     });
   }
 
-  function choose_word(word) {
+  function choose_word(word, next) {
     $.post('/consume', {chosen_word: word}, function success(data) {
       render(data);
+      next();
     });
   }
 
