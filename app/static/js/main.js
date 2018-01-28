@@ -32,9 +32,7 @@ const MidiDebug = (function() {
   }
 
   function handleChord(data) {
-    console.log(
-      data.chord + ':' + data.inversions + JSON.stringify()
-    );
+    console.log(data.chord + ':' + data.inversions);
   }
 
   function render(data) {

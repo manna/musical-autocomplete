@@ -6,7 +6,7 @@
 class MusicEvents {
   constructor() {
     const self = this;
-    this.STEP = 25; // in ms
+    this.STEP = 100; // in ms
     this.NOTES = 'NOTES'; // magic numbers
     this.CHORD = 'CHORD';
     this.EMPTY = 'EMPTY';
@@ -30,7 +30,6 @@ class MusicEvents {
     }, this.STEP);
 
     window.addEventListener('emulatednoteon', e => {
-      console.log(e.detail);
       const note = e.detail.note.name + e.detail.note.octave;
       self.queue.push(note);
     });
@@ -68,6 +67,7 @@ class MusicEvents {
     if (notes.length <= 2) {
       return {type: this.NOTES, notes};
     } else {
+      console.log('intervals');
       for (let i = 0; i < notes.length; i++) {
         const currNotes = notes
           .slice(i, notes.length)
@@ -80,6 +80,7 @@ class MusicEvents {
             Tonal.Distance.semitones(currNotes[0], note)
           );
         });
+        console.log(intervals);
         const chordType = this.chordDict[intervals.join(' ')];
         if (chordType) {
           const chord = rootName + chordType;

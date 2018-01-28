@@ -24,7 +24,7 @@ const Drivers = (() => {
 
   // precondition: there is a keyboard that can dispatch events
   function initKeyboardDriver() {
-    const notes = ['B3', 'C3', 'D3', 'E3', 'F3', 'G3', 'A4', 'B4', 'C4', 'D4'];
+    const notes = ['C3', 'D3', 'E3', 'F3', 'G3', 'A3', 'B3', 'C4', 'D4', 'E4'];
     const order = {
       65: 0, 83: 1, 68: 2, 70: 3,
       71: 4, 72: 5, 74: 6, 75: 7,
