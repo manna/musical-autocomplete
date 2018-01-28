@@ -6,8 +6,22 @@ const MidiDebug = (function() {
 
   // work functions
   function initMidiDebug() {
+    // get initial state
     $.post('/state', function success(data) {
       render(data);
+    });
+
+    // set up the glue for the emulated (or real) midi device
+    Drivers.keyboard();
+
+    // misc event listeners
+    const musicEvents = new MusicEvents();
+    musicEvents.addEventListener('group', data => {
+      if (data.type === musicEvents.NOTES) {
+        console.log(data.notes.join(','));
+      } else {
+        handleChord(data);
+      }
     });
 
     document.getElementById('refresh').addEventListener('click', () => {
@@ -15,37 +29,12 @@ const MidiDebug = (function() {
         render(data);
       });
     });
-
-    /*
-    WebMidi.enable(err => {
-      if (err) {
-        console.log('WebMidi could not be enabled.', err);
-      } else if (WebMidi.inputs.length < 1) {
-        console.log('No input devices found.');
-      } else {
-        console.log('WebMidi enabled!');
-        const input = WebMidi.getInputByName(INPUT_NAME);
-        const musicEvents = new MusicEvents(input);
-        musicEvents.addEventListener('group', data => {
-          if (data.type === musicEvents.NOTES) {
-            console.log(data.notes.join(','));
-          } else {
-            const chordVec = getChordVec(data.notes);
-            console.log(
-              data.chord + ':' + data.inversions + JSON.stringify()
-            );
-            handleChord(data);
-            render();
-          }
-        });
-      }
-    });
-    */
   }
 
-  function getChordVec(notes) {
-    // vec 
-    return notes;
+  function handleChord(data) {
+    console.log(
+      data.chord + ':' + data.inversions + JSON.stringify()
+    );
   }
 
   function render(data) {
