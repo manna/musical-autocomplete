@@ -4,14 +4,13 @@
 // @date 2017-10-22
 
 class MusicEvents {
-  constructor(midiInput) {
+  constructor() {
     const self = this;
-    this.STEP = 25; // in ms
+    this.STEP = 15; // in ms
     this.NOTES = 'NOTES'; // magic numbers
     this.CHORD = 'CHORD';
     this.EMPTY = 'EMPTY';
 
-    this.input = midiInput;
     this.queue = [];
     this.listeners = {};
     this.chordDict = {};
@@ -30,8 +29,8 @@ class MusicEvents {
       self.processQueue();
     }, this.STEP);
 
-    this.input.addListener('noteon', 'all', e => {
-      const note = e.note.name + e.note.octave;
+    window.addEventListener('emulatednoteon', e => {
+      const note = e.detail.note.name + e.detail.note.octave;
       self.queue.push(note);
     });
   }
@@ -55,10 +54,7 @@ class MusicEvents {
     if (i !== this.queue.length) {
       // output all of the notes before the first double break as a group
       const notes = Tonal.Array
-        .sort(this.queue.slice(0, i).filter(a => a !== this.EMPTY))
-        .filter(note => {
-          return Tonal.Note.midi(note) > 48;
-        });
+        .sort(this.queue.slice(0, i).filter(a => a !== this.EMPTY));
       if (notes.length !== 0) this.notify('group', this.classify(notes));
 
       // clear everything up to and including the double break from the queue
@@ -71,6 +67,7 @@ class MusicEvents {
     if (notes.length <= 2) {
       return {type: this.NOTES, notes};
     } else {
+      console.log('intervals');
       for (let i = 0; i < notes.length; i++) {
         const currNotes = notes
           .slice(i, notes.length)
@@ -83,6 +80,7 @@ class MusicEvents {
             Tonal.Distance.semitones(currNotes[0], note)
           );
         });
+        console.log(intervals);
         const chordType = this.chordDict[intervals.join(' ')];
         if (chordType) {
           const chord = rootName + chordType;
