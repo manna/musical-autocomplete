@@ -13,13 +13,16 @@ const MidiDebug = (function() {
     });
 
     // set up the glue for the emulated (or real) midi device
-    Drivers.keyboard();
+    Drivers.real(INPUT_NAME);
 
     // misc event listeners
     const musicEvents = new MusicEvents();
     musicEvents.addEventListener('group', data => {
       // add the notes to the history
-      Array.prototype.push.apply(previous_state.note_history, data.notes);
+      Array.prototype.push.apply(
+        previous_state.note_history,
+        data.notes.map(n => Tonal.Note.midi(n))
+      );
 
       // check suffix against melodies
       // TODO: this function is fat af abstract #dat #shit
@@ -29,12 +32,13 @@ const MidiDebug = (function() {
         if (melody.length > previous_state.note_history.length) continue;
 
         for (let j = 1; j <= melody.length; j++) {
-          const note = previous_state.note_history[
-            previous_state.note_history.length - j
-          ].charAt(0);
-          if (note !== melody[melody.length - j]) {
-            different = true;
-          }
+          const prev_note_chroma = Tonal.Note.chroma(Tonal.Note.fromMidi(
+            previous_state.note_history[previous_state.note_history.length - j]
+          ));
+          const melody_note_chroma = Tonal.Note.chroma(Tonal.Note.fromMidi(
+            melody[melody.length - j]
+          ));
+          if (prev_note_chroma !== melody_note_chroma) different = true;
         }
         if (!different) {
           // select word i
@@ -53,7 +57,7 @@ const MidiDebug = (function() {
 
       // logging stuff
       if (data.type === musicEvents.NOTES) {
-        console.log(data.notes.join(','));
+        console.log(data.notes.map(n => `${n}(${Tonal.Note.midi(n)})`).join(','));
       } else {
         handleChord(data);
       }
@@ -82,7 +86,9 @@ const MidiDebug = (function() {
 
     // add events to all of the next word options
     data['next_words'].forEach((next_word, i) => {
-      const next_melody = data['melodies'][i];
+      const next_melody = data['melodies'][i]
+        .map(n => Tonal.Note.fromMidi(n))
+        .map(n => n.substring(0, n.length - 1));
       const word_element = document.createElement('div');
       word_element.className = 'word-element';
       word_element.innerHTML = next_word +

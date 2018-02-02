@@ -48,7 +48,9 @@ def melodies_are_same(a, b):
 
 
 def get_random_melody(k):
-    return [random.choice(['C','D','E','F','G','A','B']) for _ in range(k)]
+    return [
+        random.choice([60, 62, 63, 65, 66, 67, 70]) for _ in range(k)
+    ]
 
 
 def get_melodies(note_history, n, k):
