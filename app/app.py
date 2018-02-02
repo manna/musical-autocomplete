@@ -50,7 +50,10 @@ def melodies_are_same(a, b):
 
 
 def get_random_melody(melody_size):
-    return [random.choice(['C','D','E','F','G','A','B']) for _ in range(melody_size)]
+    return [
+        random.choice([60, 62, 63, 65, 66, 67, 70]) for _ in range(melody_size)
+    ]
+
 
 def get_random_melodies(note_history, n, melody_size):
     melodies = []
@@ -70,8 +73,8 @@ def get_melodies(note_history, n, melody_size):
         headers={'Content-Type': 'application/json'}
         )
     melodies = simplejson.loads(str(r.text).splitlines()[-1])
-    for melody in melodies:
-        yield map(lambda m:m['pitch'], melody)
+    for notes, loglik, midi_file in melodies:
+        yield map(lambda note:note['pitch'], notes)
 
 # convenience method to update next words and the version
 def update_next_words():
