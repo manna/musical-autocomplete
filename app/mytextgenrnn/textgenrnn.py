@@ -35,26 +35,26 @@ class textgenrnn:
     def generate(self, n=1, return_as_list=False, **kwargs):
         gen_texts = []
         for _ in range(n):
-            gen_text = textgenrnn_generate(self.model,
+            gen_text, likelihood = textgenrnn_generate(self.model,
                                            self.vocab,
                                            self.indices_char,
                                            **kwargs)
             if not return_as_list:
                 print("{}\n".format(gen_text))
-            gen_texts.append(gen_text)
+            gen_texts.append( (gen_text, likelihood) )
         if return_as_list:
             return gen_texts
 
     def generate_word(self, n=1, return_as_list=False, **kwargs):
         gen_texts = []
         for _ in range(n):
-            gen_text = textgenrnn_generate_word(self.model,
+            gen_text, likelihood = textgenrnn_generate_word(self.model,
                                                 self.vocab,
                                                 self.indices_char,
                                                 **kwargs)
             if not return_as_list:
                 print("{}\n".format(gen_text))
-            gen_texts.append(gen_text)
+            gen_texts.append( (gen_text, likelihood) )
         if return_as_list:
             return gen_texts
 
@@ -134,13 +134,12 @@ def textgenrnn_model(weights_path, num_classes, maxlen=40):
     return model
 
 
-def textgenrnn_sample(preds, temperature):
+def textgenrnn_sample(raw_preds, temperature):
     '''
     Samples predicted probabilities of the next character to allow
     for the network to show "creativity."
     '''
-
-    preds = np.asarray(preds).astype('float64')
+    preds = np.asarray(raw_preds).astype('float64')
 
     if temperature is None or temperature == 0.0:
         return np.argmax(preds)
@@ -154,8 +153,7 @@ def textgenrnn_sample(preds, temperature):
     while index < 1:
         probas = np.random.multinomial(1, preds, 1)
         index = np.argmax(probas)
-    return index
-
+    return index, raw_preds[index]
 
 def textgenrnn_generate(model, vocab,
                         indices_char, prefix=None, temperature=0.2,
@@ -165,18 +163,20 @@ def textgenrnn_generate(model, vocab,
     Generates and returns a single text.
     '''
 
+    text_likelihood = 1.0
     text = [meta_token] + list(prefix) if prefix else [meta_token]
     next_char = ''
 
     while next_char != meta_token and len(text) < max_gen_length:
         encoded_text = textgenrnn_encode_sequence(text[-maxlen:],
                                                   vocab, maxlen)
-        next_index = textgenrnn_sample(
+        next_index, likelihood = textgenrnn_sample(
             model.predict(encoded_text, batch_size=1)[0],
             temperature)
         next_char = indices_char[next_index]
         text += [next_char]
-    return ''.join(text[1:-1])
+        text_likelihood *= likelihood
+    return ''.join(text[1:-1]), text_likelihood
 
 # assumes prefix ends in a non-space
 def textgenrnn_generate_word(model, vocab,
@@ -187,6 +187,7 @@ def textgenrnn_generate_word(model, vocab,
     Generates and returns a single text.
     '''
 
+    text_likelihood = 1.0
     text = [meta_token] + list(prefix) if prefix else [meta_token]
     next_char = ''
     space_count = 0
@@ -194,16 +195,17 @@ def textgenrnn_generate_word(model, vocab,
     while next_char != meta_token and len(text) < max_gen_length:
         encoded_text = textgenrnn_encode_sequence(text[-maxlen:],
                                                   vocab, maxlen)
-        next_index = textgenrnn_sample(
+        next_index, likelihood = textgenrnn_sample(
             model.predict(encoded_text, batch_size=1)[0],
             temperature)
         next_char = indices_char[next_index]
         text += [next_char]
+        text_likelihood *= likelihood
         if len(text) >= len(list(prefix)) and next_char == ' ':
             space_count += 1
         if space_count > 0:
             break
-    return ''.join(text[1:-1])
+    return ''.join(text[1:-1]), text_likelihood
 
 
 def textgenrnn_encode_sequence(text, vocab, maxlen):

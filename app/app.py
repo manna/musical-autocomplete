@@ -1,5 +1,6 @@
 from flask import Flask, render_template, jsonify, request
 from mytextgenrnn import textgenrnn
+from word2melody_assigner import assign
 import random
 import json
 import simplejson
@@ -25,21 +26,21 @@ state = { 'prefix': initial_prefix, 'note_history': [] }
 # ==
 # get next words according to the language model
 def get_next_words(prefix, n=5, max_attempts=100):
-    words = []
+    words = {}
     temp = 0.2
     attempts = 0
     while len(words) < n and attempts < max_attempts:
         attempts += 1
-        raw_word = textgen.generate_word(
+        raw_word, likelihood = textgen.generate_word(
             n=1, prefix=prefix, temperature=temp, return_as_list=True,
             max_gen_length=1000
         )[0]
         word = raw_word[len(prefix):]
         if word not in words:
-            words.append(word)
+            words[word] = likelihood
         else:
             temp *= 1.05
-    return words
+    return words.items()
 
 
 def melodies_are_same(a, b):
@@ -73,19 +74,29 @@ def get_melodies(note_history, n, melody_size):
         headers={'Content-Type': 'application/json'}
         )
     melodies = simplejson.loads(str(r.text).splitlines()[-1])
-    for notes, loglik, midi_file in melodies:
-        yield map(lambda note:note['pitch'], notes)
+    return melodies
+    # for notes, loglik, midi_file in melodies:
+    #     yield map(lambda note:note['pitch'], notes)
 
 # convenience method to update next words and the version
 def update_next_words():
     sample_count = 10
     melody_size = 3
-    state['next_words'] = get_next_words(state['prefix'], n=sample_count)
-    state['melodies'] = list(get_melodies(
+    words_and_likelihoods = get_next_words(state['prefix'], n=sample_count)
+    melodies_and_likelihoods = get_melodies(
         state['note_history'],
         sample_count,
         melody_size
-    ))
+        )
+    assignment = assign(words_and_likelihoods, melodies_and_likelihoods)
+    # `assignment` looks like `{word : (notes, midi_path), ... }`
+    words, notes_and_midi_paths = zip(*assignment.items())
+    state['next_words'] = words
+    state['melodies'] = map(
+        lambda (notes, midi_path):
+        map(lambda note:note['pitch'],notes),
+        notes_and_midi_paths
+    )
     state['version'] = hash(state['prefix'])
 
 # init state

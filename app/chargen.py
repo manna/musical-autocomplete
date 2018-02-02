@@ -8,10 +8,10 @@ def get_next_words(prefix, n=5):
     words = []
     temp = 0.2
     while len(words) < n:
-        raw_word = textgen.generate_word(
+        raw_word, likelihood = textgen.generate_word(
             n=1, prefix=prefix, temperature=temp, return_as_list=True
         )[0]
-        print raw_word
+        print raw_word, ":", likelihood
         word = raw_word[1+len(prefix):]
         if word not in words:
             words.append(word)
