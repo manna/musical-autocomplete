@@ -2,6 +2,8 @@ from flask import Flask, render_template, jsonify, request
 from mytextgenrnn import textgenrnn
 import random
 import json
+import simplejson
+import requests
 app = Flask(__name__)
 textgen = textgenrnn()
 
@@ -47,30 +49,40 @@ def melodies_are_same(a, b):
     return True
 
 
-def get_random_melody(k):
-    return [random.choice(['C','D','E','F','G','A','B']) for _ in range(k)]
+def get_random_melody(melody_size):
+    return [random.choice(['C','D','E','F','G','A','B']) for _ in range(melody_size)]
 
-
-def get_melodies(note_history, n, k):
+def get_random_melodies(note_history, n, melody_size):
     melodies = []
     while len(melodies) < n:
-        random_melody = get_random_melody(k)
+        random_melody = get_random_melody(melody_size)
         for melody in melodies:
             if melodies_are_same(melody, random_melody): continue
         melodies.append(random_melody)
     return melodies
 
+def get_melodies(note_history, n, melody_size):
+    r = requests.post("http://localhost:5001",
+        data=json.dumps({
+            'num_outputs': n,
+            'primer_melody': note_history[-8:]
+            }),
+        headers={'Content-Type': 'application/json'}
+        )
+    melodies = simplejson.loads(str(r.text).splitlines()[-1])
+    for melody in melodies:
+        yield map(lambda m:m['pitch'], melody)
 
 # convenience method to update next words and the version
 def update_next_words():
     sample_count = 10
     melody_size = 3
     state['next_words'] = get_next_words(state['prefix'], n=sample_count)
-    state['melodies'] = get_melodies(
+    state['melodies'] = list(get_melodies(
         state['note_history'],
         sample_count,
         melody_size
-    )
+    ))
     state['version'] = hash(state['prefix'])
 
 # init state
