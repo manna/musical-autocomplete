@@ -1,6 +1,5 @@
 from munkres import Munkres, print_matrix
-from textblob import TextBlob
-import numpy as np
+# from textblob import TextBlob
 
 surprisal_cost_sample_mean = 21.17
 surprisal_cost_sample_std = 8.50
