@@ -82,10 +82,11 @@ def get_melodies(note_history, n, melody_size):
         headers={'Content-Type': 'application/json'}
         )
     melodies = simplejson.loads(str(r.text).splitlines()[-1])
+    max_melody_len = 4
     melodies = map(
         lambda (notes, loglik, midi_path):
-        (notes[len(note_history):len(note_history)+8], # Max length 8 notes.
-        loglik, midi_path), 
+        (notes[len(note_history):len(note_history)+max_melody_len],
+        loglik, midi_path),
         melodies
     )
     return melodies

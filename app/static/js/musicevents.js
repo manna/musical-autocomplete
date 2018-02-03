@@ -4,12 +4,14 @@
 // @date 2017-10-22
 
 class MusicEvents {
-  constructor() {
+  // @param cutoff - ignore notes below the cutoff
+  constructor(cutoff) {
     const self = this;
     this.STEP = 15; // in ms
     this.NOTES = 'NOTES'; // magic numbers
     this.CHORD = 'CHORD';
     this.EMPTY = 'EMPTY';
+    this.cutoff = cutoff || -1;
 
     this.queue = [];
     this.listeners = {};
@@ -31,7 +33,9 @@ class MusicEvents {
 
     window.addEventListener('emulatednoteon', e => {
       const note = e.detail.note.name + e.detail.note.octave;
-      self.queue.push(note);
+      if (Tonal.Note.midi(note) > self.cutoff) {
+        self.queue.push(note);
+      }
     });
   }
 

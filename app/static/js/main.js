@@ -16,7 +16,7 @@ const MidiDebug = (function() {
     Drivers.real(INPUT_NAME, false, Drivers.keyboard);
 
     // misc event listeners
-    const musicEvents = new MusicEvents();
+    const musicEvents = new MusicEvents(Tonal.Note.midi("C3"));
     musicEvents.addEventListener('group', data => {
       // add the notes to the history
       Array.prototype.push.apply(
