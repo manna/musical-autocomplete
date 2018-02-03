@@ -1,10 +1,11 @@
 from munkres import Munkres, print_matrix
 from textblob import TextBlob
+import numpy as np
 
-surprisal_cost_sample_mean = 18.4389368615
-surprisal_cost_sample_std = 8.17545587452
-prosodic_cost_sample_mean = 2.49166666667
-prosodic_cost_sample_std = 2.03181295618
+surprisal_cost_sample_mean = 21.17
+surprisal_cost_sample_std = 8.50
+prosodic_cost_sample_mean = 2.77
+prosodic_cost_sample_std = 1.97
 
 def cost((word, word_loglik), (notes, melody_loglik, midi_path)):
   surprisal_cost = abs(word_loglik-melody_loglik)
