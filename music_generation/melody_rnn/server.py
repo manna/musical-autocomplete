@@ -78,9 +78,10 @@ tf.app.flags.DEFINE_integer(
     'port', 5000,
     'Server port')
 
-def generate_melody((generator, primer_melody)):
+def generate_melody((generator, primer_melody, num_steps)):
     FLAGS.num_outputs = 1
     FLAGS.primer_melody = str(primer_melody)
+    FLAGS.num_steps = int(num_steps)
     return list(run_with_flags(FLAGS, generator))[0]
 
 pool = Pool(2)
@@ -95,10 +96,17 @@ class S(BaseHTTPRequestHandler):
         """
         Example usage:
 
-        curl -d "{\"num_outputs\":10,\"primer_melody\":[60]}" -H "Content-Type: application/json" -X POST http://localhost:5000/data
+        curl -d "{\"num_outputs\":10,
+                  \"primer_melody\":[60]
+                  \"num_steps\":48}"
+             -H "Content-Type: application/json"
+             -X POST http://localhost:5000/data
         
         @return generated_melodies: [ [notes, loglik, midi_path], ... ]
-        such that len(generated_melodies) = data["num_outputs"]
+        such that:
+            - len(generated_melodies) = data["num_outputs"]
+            - each `notes` is data["num_steps"] long
+            - each `notes` starts with data["primer_melody"]
         """
         
         self._set_headers()
@@ -112,8 +120,10 @@ class S(BaseHTTPRequestHandler):
         
         num_outputs = data['num_outputs'];
         primer_melody = data['primer_melody'];
+        num_steps = data['num_steps'];
+
         generated_melodies = list(
-            pool.map(generate_melody, [(generator,primer_melody)]*num_outputs)
+            pool.map(generate_melody, [(generator,primer_melody,num_steps)]*num_outputs)
             )
 
         # Single process:

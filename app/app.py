@@ -66,14 +66,28 @@ def get_random_melodies(note_history, n, melody_size):
     return melodies
 
 def get_melodies(note_history, n, melody_size):
+    """
+    melody_size : # of 16ths in the melody's total playing time
+
+    Returns:
+        - [(notes, loglik, midi_file), ...] such that each `notes` begins with
+        `note_history`
+    """
     r = requests.post("http://localhost:5001",
         data=json.dumps({
             'num_outputs': n,
-            'primer_melody': note_history[-8:]
+            'primer_melody': note_history[-8:],
+            'num_steps':melody_size
             }),
         headers={'Content-Type': 'application/json'}
         )
     melodies = simplejson.loads(str(r.text).splitlines()[-1])
+    melodies = map(
+        lambda (notes, loglik, midi_path):
+        (notes[len(note_history):len(note_history)+8], # Max length 8 notes.
+        loglik, midi_path), 
+        melodies
+    )
     return melodies
     # for notes, loglik, midi_file in melodies:
     #     yield map(lambda note:note['pitch'], notes)
@@ -81,10 +95,10 @@ def get_melodies(note_history, n, melody_size):
 # convenience method to update next words and the version
 def update_next_words():
     sample_count = 10
-    melody_size = 3
+    melody_size = min(len(state['note_history']), 12)*3 + 24
     words_and_likelihoods = get_next_words(state['prefix'], n=sample_count)
     melodies_and_likelihoods = get_melodies(
-        state['note_history'],
+        state['note_history'][-12:],
         sample_count,
         melody_size
         )

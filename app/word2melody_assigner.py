@@ -1,9 +1,22 @@
 from munkres import Munkres, print_matrix
+from textblob import TextBlob
+
+surprisal_cost_sample_mean = 18.4389368615
+surprisal_cost_sample_std = 8.17545587452
+prosodic_cost_sample_mean = 2.49166666667
+prosodic_cost_sample_std = 2.03181295618
 
 def cost((word, word_loglik), (notes, melody_loglik, midi_path)):
   surprisal_cost = abs(word_loglik-melody_loglik)
-  prosodic_cost = abs(len(notes) - len(word))
-  sentiment_cost = 0 # TODO
+  prosodic_cost = float(abs(len(notes) - len(word)))
+  # word_polarity = TextBlob(word).sentences[0].polarity
+  # notes_polarity = ?? # TODO
+
+  # Normalize
+  surprisal_cost = (surprisal_cost-surprisal_cost_sample_mean)/surprisal_cost_sample_std
+  prosodic_cost = (prosodic_cost-prosodic_cost_sample_mean)/prosodic_cost_sample_std
+  
+  sentiment_cost = 0 
 
   return surprisal_cost + prosodic_cost + sentiment_cost
 
