@@ -13,7 +13,7 @@ const MidiDebug = (function() {
     });
 
     // set up the glue for the emulated (or real) midi device
-    Drivers.real(INPUT_NAME);
+    Drivers.real(INPUT_NAME, false, Drivers.keyboard);
 
     // misc event listeners
     const musicEvents = new MusicEvents();

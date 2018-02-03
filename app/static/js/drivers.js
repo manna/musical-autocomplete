@@ -2,7 +2,10 @@
 // postconditions: window object dispatches emulatednoteon events
 const Drivers = (() => {
   // precondition: there is a midi device named input_name
-  function initRealDriver(input_name) { // pass-through
+  function initRealDriver(input_name, success, fail) { // pass-through
+    success = success || (() => true);
+    fail = fail || (() => true);
+
     WebMidi.enable(err => {
       if (err) {
         console.log('WebMidi could not be enabled.', err);
@@ -15,10 +18,13 @@ const Drivers = (() => {
             window.dispatchEvent(new CustomEvent('emulatednoteon', {detail: e}));
           });
           console.log('WebMidi enabled!');
+          return success();
         } else {
           console.log('Error setting up listeners.');
         }
       }
+
+      return fail();
     });
   }
 
