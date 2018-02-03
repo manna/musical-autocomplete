@@ -47,8 +47,12 @@ const MidiDebug = (function() {
 
           // optimistic update
           document.getElementById('text').innerHTML += ' ' + selected_word;
+          document.getElementById('action-container').style.display = 'none';
+          document.getElementById('loading-container').style.display = 'block';
 
           choose_word(selected_word, () => {
+            document.getElementById('action-container').style.display = 'block';
+            document.getElementById('loading-container').style.display = 'none';
             AJAX_LOCK = false;
           });
           break;
