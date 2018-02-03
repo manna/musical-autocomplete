@@ -109,8 +109,12 @@ const MidiDebug = (function() {
 
             // optimistic update
             document.getElementById('text').innerHTML += ' ' + next_word_closure;
+            document.getElementById('action-container').style.display = 'none';
+            document.getElementById('loading-container').style.display = 'block';
             
             return choose_word(next_word_closure, () => {
+              document.getElementById('action-container').style.display = 'block';
+              document.getElementById('loading-container').style.display = 'none';
               AJAX_LOCK = false;
             });
           }
