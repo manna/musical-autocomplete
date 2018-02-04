@@ -2,6 +2,7 @@ const MidiDebug = (function() {
   // constants
   const INPUT_NAME = 'Keystation 88 MIDI 1';
   const message = [];
+  let prev_length = 0;
   let previous_state = {};
   let AJAX_LOCK = false;
 
@@ -10,6 +11,7 @@ const MidiDebug = (function() {
     // get initial state
     $.post('/state', function success(data) {
       render(data);
+      prev_length = previous_state.note_history.length;
     });
 
     // set up the glue for the emulated (or real) midi device
@@ -29,7 +31,8 @@ const MidiDebug = (function() {
       for (let i = 0; i < previous_state['melodies'].length; i++) {
         const melody = previous_state['melodies'][i];
         let different = false;
-        if (melody.length > previous_state.note_history.length) continue;
+        const num_new_notes = previous_state.note_history.length - prev_length;
+        if (melody.length > num_new_notes) continue;
 
         for (let j = 1; j <= melody.length; j++) {
           const prev_note_chroma = Tonal.Note.chroma(Tonal.Note.fromMidi(
@@ -41,6 +44,9 @@ const MidiDebug = (function() {
           if (prev_note_chroma !== melody_note_chroma) different = true;
         }
         if (!different) {
+          // update prev length state to avoid counting these notes again
+          prev_length = previous_state.note_history.length;
+
           // select word i
           const selected_word = previous_state['next_words'][i]
           AJAX_LOCK = true;

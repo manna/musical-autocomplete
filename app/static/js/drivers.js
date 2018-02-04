@@ -30,7 +30,7 @@ const Drivers = (() => {
 
   // precondition: there is a keyboard that can dispatch events
   function initKeyboardDriver() {
-    const notes = ['C2', 'D2', 'Eb2', 'F3', 'F#3', 'G3', 'Bb3'];
+    const notes = ['A3', 'B3', 'C4', 'D4', 'E4', 'F4', 'G4'];
     window.addEventListener('keydown', e => {
       if (e.keyCode >= 65 && e.keyCode <= 71) {
         const value = notes[e.keyCode - 65];
