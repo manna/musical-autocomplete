@@ -15,7 +15,11 @@ const MidiDebug = (function() {
     });
 
     // set up the glue for the emulated (or real) midi device
-    Drivers.real(INPUT_NAME, false, Drivers.keyboard);
+    Drivers.real(INPUT_NAME, function success() {
+      window.addEventListener('keyup', (e) => {
+        console.log('KEY: ' + e.key);
+      })
+    }, Drivers.keyboard);
 
     // misc event listeners
     const musicEvents = new MusicEvents(Tonal.Note.midi("C3"));
@@ -53,12 +57,10 @@ const MidiDebug = (function() {
 
           // optimistic update
           document.getElementById('text').innerHTML += ' ' + selected_word;
-          document.getElementById('action-container').style.display = 'none';
-          document.getElementById('loading-container').style.display = 'block';
+          toggleLoadingOn();
 
           choose_word(selected_word, () => {
-            document.getElementById('action-container').style.display = 'block';
-            document.getElementById('loading-container').style.display = 'none';
+            toggleLoadingOff();
             AJAX_LOCK = false;
           });
           break;
@@ -74,10 +76,22 @@ const MidiDebug = (function() {
     });
 
     document.getElementById('refresh').addEventListener('click', () => {
+      toggleLoadingOn();
       $.post('/refresh', function success(data) {
+        toggleLoadingOff();
         render(data);
       });
     });
+  }
+
+  function toggleLoadingOn() {
+    document.getElementById('action-container').style.display = 'none';
+    document.getElementById('loading-container').style.display = 'block';
+  }
+
+  function toggleLoadingOff() {
+    document.getElementById('action-container').style.display = 'block';
+    document.getElementById('loading-container').style.display = 'none';
   }
 
   function handleChord(data) {
@@ -115,12 +129,10 @@ const MidiDebug = (function() {
 
             // optimistic update
             document.getElementById('text').innerHTML += ' ' + next_word_closure;
-            document.getElementById('action-container').style.display = 'none';
-            document.getElementById('loading-container').style.display = 'block';
+            toggleLoadingOn();
             
             return choose_word(next_word_closure, () => {
-              document.getElementById('action-container').style.display = 'block';
-              document.getElementById('loading-container').style.display = 'none';
+              toggleLoadingOff();
               AJAX_LOCK = false;
             });
           }

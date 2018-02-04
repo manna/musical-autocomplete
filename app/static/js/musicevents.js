@@ -33,7 +33,7 @@ class MusicEvents {
 
     window.addEventListener('emulatednoteon', e => {
       const note = e.detail.note.name + e.detail.note.octave;
-      if (Tonal.Note.midi(note) > self.cutoff) {
+      if (Tonal.Note.midi(note) >= self.cutoff) {
         self.queue.push(note);
       }
     });
