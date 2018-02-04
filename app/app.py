@@ -141,7 +141,7 @@ def consume_word():
     chosen_word = request.form['chosen_word']
     note_history = request.form['note_history']
     state['note_history'] = json.loads(note_history)
-    state['prefix'] += chosen_word + ' '
+    state['prefix'] += chosen_word
     update_next_words()
     return jsonify(state)
 

@@ -15,11 +15,25 @@ const MidiDebug = (function() {
     });
 
     // set up the glue for the emulated (or real) midi device
-    Drivers.real(INPUT_NAME, function success() {
-      window.addEventListener('keyup', (e) => {
-        console.log('KEY: ' + e.key);
-      })
-    }, Drivers.keyboard);
+    Drivers.real(
+      INPUT_NAME,
+      function success() { // let users type in individual keys
+        window.addEventListener('keyup', (e) => {
+          if (!AJAX_LOCK) {
+            // optimistic update
+            document.getElementById('text').innerHTML += e.key;
+            toggleLoadingOn();
+            AJAX_LOCK = true;
+
+            choose_word(e.key, () => {
+              toggleLoadingOff();
+              AJAX_LOCK = false;
+            });
+          }
+        })
+      },
+      Drivers.keyboard
+    );
 
     // misc event listeners
     const musicEvents = new MusicEvents(Tonal.Note.midi("C3"));
@@ -47,7 +61,7 @@ const MidiDebug = (function() {
           ));
           if (prev_note_chroma !== melody_note_chroma) different = true;
         }
-        if (!different) {
+        if (!different && !AJAX_LOCK) {
           // update prev length state to avoid counting these notes again
           prev_length = previous_state.note_history.length;
 
@@ -59,7 +73,7 @@ const MidiDebug = (function() {
           document.getElementById('text').innerHTML += ' ' + selected_word;
           toggleLoadingOn();
 
-          choose_word(selected_word, () => {
+          choose_word(selected_word + ' ', () => {
             toggleLoadingOff();
             AJAX_LOCK = false;
           });
@@ -131,7 +145,7 @@ const MidiDebug = (function() {
             document.getElementById('text').innerHTML += ' ' + next_word_closure;
             toggleLoadingOn();
             
-            return choose_word(next_word_closure, () => {
+            return choose_word(next_word_closure + ' ', () => {
               toggleLoadingOff();
               AJAX_LOCK = false;
             });
