@@ -1,6 +1,5 @@
 const MidiDebug = (function() {
   // constants
-  const INPUT_NAME = 'Keystation 88 MIDI 1';
   const message = [];
   let prev_length = 0;
   let previous_state = {};
@@ -16,7 +15,6 @@ const MidiDebug = (function() {
 
     // set up the glue for the emulated (or real) midi device
     Drivers.real(
-      INPUT_NAME,
       function success() { // let users type in individual keys
         window.addEventListener('keyup', (e) => {
           if (!AJAX_LOCK) {
