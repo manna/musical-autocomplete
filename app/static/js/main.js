@@ -121,13 +121,20 @@ const MidiDebug = (function() {
     word_list.innerHTML = '';
 
     // add events to all of the next word options
+    const last_char_index = previous_state.prefix.length - 1;
+    const last_char_space = previous_state.prefix.charAt(last_char_index) === ' ';
+    const last_space = previous_state.prefix.lastIndexOf(' ');
+    const unfinished_prefix = previous_state.prefix.substring(last_space);
+    const render_prefix = '<span style="color: #FAB02F">' +
+      (last_char_space ? '' : unfinished_prefix) +
+      '</span>';
     data['next_words'].forEach((next_word, i) => {
       const next_melody = data['melodies'][i]
         .map(n => Tonal.Note.fromMidi(n))
         .map(n => n.substring(0, n.length - 1));
       const word_element = document.createElement('div');
       word_element.className = 'word-element';
-      word_element.innerHTML = next_word +
+      word_element.innerHTML = render_prefix + next_word +
         '<span style="color: #cdcdcd"> --- </span>' +
         '<code>' + next_melody.join(',') + '</code>';
       word_element.addEventListener('click', (next_word_closure => {
