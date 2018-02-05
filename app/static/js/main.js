@@ -17,7 +17,7 @@ const MidiDebug = (function() {
     Drivers.real(
       function success() { // let users type in individual keys
         window.addEventListener('keyup', (e) => {
-          if (!AJAX_LOCK) {
+          if (!AJAX_LOCK && e.key !== 'Shift') {
             // optimistic update
             document.getElementById('text').innerHTML += e.key;
             toggleLoadingOn();
