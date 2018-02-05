@@ -1,5 +1,7 @@
-# piano-language
-Do pianos speak of electric-sheep
+# Musical Autocomplete
+Do pianos speak of electric sheep?
+
+![Diagram](musical_autocomplete.png)
 
 # development
 
