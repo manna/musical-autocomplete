@@ -1,6 +1,8 @@
 // preconditions: the invoked drivers determine their own preconditions
 // postconditions: window object dispatches emulatednoteon events
 const Drivers = (() => {
+  const input_index = parseInt(document.location.hash.substring(1) || '0');
+
   function initRealDriver(success, fail) { // pass-through
     success = success || (() => true);
     fail = fail || (() => true);
@@ -11,7 +13,7 @@ const Drivers = (() => {
       } else if (WebMidi.inputs.length < 1) {
         console.log('No input devices found.');
       } else {
-        const input = WebMidi.getInputByName(WebMidi.inputs[0].name);
+        const input = WebMidi.getInputByName(WebMidi.inputs[input_index].name);
         if (input) {
           input.addListener('noteon', 'all', e => {
             window.dispatchEvent(new CustomEvent('emulatednoteon', {detail: e}));
